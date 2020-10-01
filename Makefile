@@ -1,6 +1,6 @@
 include .env
 
-PROJECTNAME=$(shell basename "$(PWD)")
+hello-world-api=$(shell basename "$(PWD)")
 
 ## Go related variables.
 GOBASE=$(shell pwd)
@@ -14,18 +14,15 @@ STDERR=/tmp/.$(hello-world-api)-stderr.txt
 ## PID file will keep the process id of the server
 PID=/tmp/.$(hello-world-api).pid
 
-## Make is verbose in Linux. Make it silent.
-MAKEFLAGS += --silent
-
 ## Setup the -ldflags option for go build here, interpolate the variable values
-LDFLAGS = -ldflags "-X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH}" hello.go
+LDFLAGS = -ldflags "-X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT}" hello.go
 
-## install: Install missing dependencies. Runs `go get` internally. e.g; make install get=github.com/foo/bar
+## install: Install missing dependencies and Runs `go get` internally. 
 install: go-get
 
 ## start: Start in development mode. Auto-starts when code changes.
 start:
-    bash -c "trap 'make stop' EXIT; $(MAKE) compile start-server watch run='make compile start-server'"
+	bash -c "trap 'make stop' EXIT; $(MAKE) compile start-server
 
 ## stop: Stop development mode.
 stop: stop-server
@@ -49,7 +46,7 @@ compile:
 	@-$(MAKE) -s go-compile 2> $(STDERR)
 	@cat $(STDERR) | sed -e '1s/.*/\nError:\n/'  | sed 's/make\[.*/ /' | sed "/^/s/^/     /" 1>&2
 
-## exec: Run given command, wrapped with custom GOPATH. e.g; make exec run="go test ./..."
+## exec: Run given command, wrapped with custom GOPATH.
 exec:
 	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) $(run)
 
@@ -84,6 +81,10 @@ update-go-deps:
 ## Unit Tests
 test-server: update-go-deps
 	go test ./hello
+
+## Cross Compilation
+build-Linux:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v
 
 .PHONY: help
 all: help
